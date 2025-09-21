@@ -66,6 +66,31 @@ router.post("/", ensureAuth, async (req, res) => {
   }
 });
 
+router.delete("/:projectId", ensureAuth, async (req, res) => {
+  try {
+    // Verify ownership
+    const [proj] = await pool.query(
+      "SELECT * FROM projects WHERE project_id = ? AND user_id = ?",
+      [req.params.projectId, req.user.user_id]
+    );
+    if (proj.length === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // Delete files first (to avoid foreign key constraint issues)
+    await pool.query("DELETE FROM files WHERE project_id = ?", [req.params.projectId]);
+
+    // Delete project
+    await pool.query("DELETE FROM projects WHERE project_id = ?", [req.params.projectId]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not delete project" });
+  }
+});
+
+
 /**
  * Get a single project
  * GET /api/projects/:id
@@ -195,5 +220,6 @@ router.post("/:id/files", ensureAuth, async (req, res) => {
   }
 });
 
+// Delete a project
 
 module.exports = router;

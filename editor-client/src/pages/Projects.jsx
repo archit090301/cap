@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchProjects, createProject } from "../apiProjects";
+import { fetchProjects, createProject, deleteProject } from "../apiProjects";
 import { useNavigate } from "react-router-dom";
 
 export default function Projects() {
@@ -26,6 +26,18 @@ export default function Projects() {
       setError(err.response?.data?.error || "Could not create project");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleDelete = async (projectId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this project?");
+    if (!confirmed) return;
+
+    try {
+      await deleteProject(projectId);
+      setProjects(p => p.filter(pr => pr.project_id !== projectId));
+    } catch (err) {
+      alert(err.response?.data?.error || "Could not delete project");
     }
   };
 
@@ -61,12 +73,20 @@ export default function Projects() {
                 <div style={{ fontWeight: 600 }}>{p.project_name}</div>
                 {p.description && <div style={{ fontSize: ".9rem", opacity: .8 }}>{p.description}</div>}
               </div>
-              <button
-                style={styles.openBtn}
-               onClick={() => navigate(`/projects/${p.project_id}/files`)}
-              >
-                Open
-              </button>
+              <div style={{ display: "flex", gap: ".5rem" }}>
+                <button
+                  style={styles.openBtn}
+                  onClick={() => navigate(`/projects/${p.project_id}`)}
+                >
+                  Open
+                </button>
+                <button
+                  style={styles.deleteBtn}
+                  onClick={() => handleDelete(p.project_id)}
+                >
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>
@@ -98,5 +118,6 @@ const styles = {
   error: { color: "crimson", gridColumn: "1 / -1", margin: 0 },
   list: { listStyle: "none", padding: 0, marginTop: "1.25rem", display: "grid", gap: ".5rem" },
   item: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: ".85rem 1rem", border: "1px solid #eee", borderRadius: 10 },
-  openBtn: { border: "1px solid #4e54c8", color: "#4e54c8", background: "transparent", padding: ".5rem .75rem", borderRadius: 8, cursor: "pointer" }
+  openBtn: { border: "1px solid #4e54c8", color: "#4e54c8", background: "transparent", padding: ".5rem .75rem", borderRadius: 8, cursor: "pointer" },
+  deleteBtn: { border: "1px solid crimson", color: "white", background: "crimson", padding: ".5rem .75rem", borderRadius: 8, cursor: "pointer" }
 };
