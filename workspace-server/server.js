@@ -61,15 +61,18 @@ app.use(passport.session());
 // ---- Routes (AFTER passport)
 const authRoutes = require("./routes/auth");
 const projectRoutes = require("./routes/projects");
+const fileRoutes = require("./routes/files");
+const runRoutes = require("./routes/run");
 
 app.use("/api", authRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api", fileRoutes);
+app.use("/api/run", runRoutes);
 
 // Health check
 app.get("/", (req, res) => res.json({ ok: true }));
 
-const runRoutes = require("./routes/run");
-app.use("/api/run", runRoutes);
+
 
 
 const PORT = process.env.PORT || 5000;

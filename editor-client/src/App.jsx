@@ -13,6 +13,8 @@ import ResetPassword from "./pages/ResetPassword";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RedirectIfAuth from "./components/RedirectIfAuth";   // ✅ new import
+import Files from "./pages/Files";
+import ProjectEditor from "./pages/ProjectEditor"; // ✅ fix here
 
 function App() {
   return (
@@ -31,12 +33,15 @@ function App() {
             <Route path="/login" element={<Login />} />
           </Route>
 
-          {/* Protected routes */}
+          {/* Protected routes */}  
           <Route element={<ProtectedRoute />}>
             <Route path="/projects" element={<Projects />} />
             <Route path="/editor" element={<Editor />} />           {/* blank editor */}
-            <Route path="/projects/:projectId" element={<Editor />} /> {/* project editor */}
+            <Route path="/projects/:projectId/files" element={<Files />} />
+            <Route path="/files/:fileId" element={<Editor />} />
+            <Route path="/projects/:projectId/files/:fileId" element={<Editor />} />
             <Route path="/profile" element={<Profile />} />
+             <Route path="/projects/:projectId" element={<ProjectEditor />} />
           </Route>
         </Routes>
       </Router>

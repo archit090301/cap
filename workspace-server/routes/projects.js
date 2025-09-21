@@ -32,7 +32,6 @@ router.get("/", ensureAuth, async (req, res) => {
 /**
  * Create a new project
  * POST /api/projects
- * body: { project_name, description?, content?, language? }
  */
 router.post("/", ensureAuth, async (req, res) => {
   const {
@@ -68,7 +67,7 @@ router.post("/", ensureAuth, async (req, res) => {
 });
 
 /**
- * Get a single project (must belong to user)
+ * Get a single project
  * GET /api/projects/:id
  */
 router.get("/:id", ensureAuth, async (req, res) => {
@@ -92,9 +91,8 @@ router.get("/:id", ensureAuth, async (req, res) => {
 });
 
 /**
- * Update a project (content/language/name/description)
+ * Update a project
  * PUT /api/projects/:id
- * body: { project_name?, description?, content?, language? }
  */
 router.put("/:id", ensureAuth, async (req, res) => {
   const { project_name, description, content, language } = req.body;
@@ -133,5 +131,69 @@ router.put("/:id", ensureAuth, async (req, res) => {
     res.status(500).json({ error: "Could not update project" });
   }
 });
+
+/**
+ * Get all files for a project
+ * GET /api/projects/:id/files
+ */
+router.get("/:id/files", ensureAuth, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT f.file_id, f.file_name, f.language_id, f.created_at, f.updated_at
+         FROM files f
+         JOIN projects p ON f.project_id = p.project_id
+        WHERE f.project_id = ? AND p.user_id = ?`,
+      [req.params.id, req.user.user_id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not fetch files for this project" });
+  }
+});
+
+/**
+ * Create a new file in a project
+ * POST /api/projects/:id/files
+ * body: { file_name, language_id? }
+ */
+router.post("/:id/files", ensureAuth, async (req, res) => {
+  const { file_name, language_id = null } = req.body;
+
+  if (!file_name || !file_name.trim()) {
+    return res.status(400).json({ error: "file_name is required" });
+  }
+
+  try {
+    // verify project belongs to the logged-in user
+    const [proj] = await pool.query(
+      "SELECT project_id FROM projects WHERE project_id = ? AND user_id = ?",
+      [req.params.id, req.user.user_id]
+    );
+    if (proj.length === 0) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO files (project_id, file_name, language_id)
+       VALUES (?, ?, ?)`,
+      [req.params.id, file_name.trim(), language_id]
+    );
+
+    const [rows] = await pool.query(
+      `SELECT file_id, file_name, language_id, created_at, updated_at
+         FROM files
+        WHERE file_id = ?`,
+      [result.insertId]
+    );
+
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not create file" });
+  }
+});
+
 
 module.exports = router;

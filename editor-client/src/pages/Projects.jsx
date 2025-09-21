@@ -63,8 +63,7 @@ export default function Projects() {
               </div>
               <button
                 style={styles.openBtn}
-               onClick={() => navigate(`/projects/${p.project_id}`)}
-
+               onClick={() => navigate(`/projects/${p.project_id}/files`)}
               >
                 Open
               </button>
